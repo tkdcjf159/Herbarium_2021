@@ -28,17 +28,14 @@ The most accurate models will be used on the unidentified plant specimens in our
     -  ![](https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2FboNAF7%2FbtqJZnRZi51%2F93XxZMGRtuj1OhSneyuI20%2Fimg.png)
   - optimizer : Adam
   - learning rate : 0.001
+  - epochs : 20
   - distributed learning using horovod
 
-###   Base + Data Balancing
-  -  balanced sampling (randomly sample same number of images per category per epoch).
-  ![](https://www.kaggleusercontent.com/kf/56421146/eyJhbGciOiJkaXIiLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0..H7qeQNSOj4PDhe44TciSiw.t5MEBtaVDT9bMwVHJoB6P07CSjUWrjFA4nYaxttfU75wHwif0hbRBZ1m3uQ2LIMWYDUwuSubJWF9V9h4RPnO-mz46Gq3yvF5f23hZwrMxWzOis_W8B0X3vMMdPfSTuiFf_z9ScXKgemuUZVPKtHhJ083e-zcriIga3Sq1wzoQ7Vq-M6cvY1NU9RaDtsqyg4beraw-BgEqi6Nf0QRuT9_xW4_-IkbMvF9W7_ObxuL-75LyQxc7wHmQF1Xxk41dQFw-azhMGU-Fc7tiGug-LmAN6whfew8xMLfHmQyLLriTPvS6tyA2_GXXY0GRcSQLA00CBAFSo9huOu9D1U_w_OM20EBjGLxvPpk6JuA-2Yukw4VDg-FM1uhK9LiqSugqa1W-4I22_WFDJRgIkApb1ZoFEiuGXtep-bLH8S_Wd--B4cu7BxGMFktQfiy2O9ql54rJKUkdM3tTY-WMZ16mNo5M-F7ooc2GqG4Dta4sVyehobqu9sQeQGBw7ovd29laEN4l6-_6ExNYepevfoOc1nsca2IXjULzlR4fRYp1yCEZYQpFFqzXQYSx5sE017i-OkiSVLQTwOscoSejmsp6oJqW86amPeaaeXz4rf_E2xeCW2nDT_vk1v_thR1KVmMgRptgUQKTHWS-voMoSwvPrGl0v4-4S4riml-a0CgiPCD9F8.79gWc4YuaByW4sl8IZS5ag/__results___files/__results___5_1.png)
-
-###   Base + Data Balancing + Data Augmentation([CutMix](https://arxiv.org/abs/1905.04899))
+###   Base + Data Augmentation([CutMix](https://arxiv.org/abs/1905.04899))
   - Use data augmentation to prevent over-fitting
   - CutMix improves the model robustness against input corruptions and its out-of-distribution detection performances
 
-###   Base + Data Balancing + Data Augmentation + Scheduler(Cosine Annealing with warmup)
+###   Base + Data Augmentation + Scheduler(Cosine Annealing with warmup)
   - Linear Warmup With Cosine Annealing is a learning rate schedule where we increase the learning rate linearly for updates and then anneal according to a cosine schedule afterwards.
   - examples
      - case1 : CosineAnnealingWarmupRestarts(optimizer, first_cycle_steps=500, cycle_mult=1.0, max_lr=0.1, min_lr=0.001, warmup_steps=100, gamma=1.0)
@@ -48,7 +45,7 @@ The most accurate models will be used on the unidentified plant specimens in our
   - hyperparameter
      - warmup_steps = steps_per_epoch * 0.1
      - first_cycle_steps = steps_per_epoch
-     - gamma = 0.5
+     - gamma = 0.8
      - max_lr = 0.001
      - min_lr = 1e-6
 
