@@ -30,7 +30,7 @@ The data has been approximately split 80%/20% for training/test. Each category h
 ###   Base
   - Pytorch
   - model : Resnet34 (use pretrained image from Imagenet)
-    -  Due to limited time for experiment, choose Resnet34 as a base model to train faster in multi-gpu environment
+    -  Due to limited time for experiment, choose Resnet34 as a base model. 
     -  ![](https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2FboNAF7%2FbtqJZnRZi51%2F93XxZMGRtuj1OhSneyuI20%2Fimg.png)
   - optimizer : Adam
   - learning rate : 0.001
