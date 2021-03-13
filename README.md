@@ -8,8 +8,7 @@ The Herbarium 2021: Half-Earth Challenge dataset includes more than 2.5M images 
 This dataset has a long tail; there are a minimum of 3 images per species. However, some species can be represented by more than 100 images. This dataset only includes vascular land plants which include lycophytes, ferns, gymnosperms, and flowering plants. The extinct forms of lycophytes are the major component of coal deposits, ferns are indicators of ecosystem health, gymnosperms provide major habitats for animals, and flowering plants provide almost all of our crops, vegetables, and fruits.
 
 The teams with the most accurate models will be contacted with the intention of using them on the unnamed plant collections in the NYBG herbarium and then be assessed by the NYBG plant specialists for accuracy.
-
-![](https://postimg.cc/BjPXFP70)
+![](https://i.postimg.cc/htpxH99f/Herbarium2021.png)
 
 ## Background
 
@@ -54,6 +53,16 @@ The data has been approximately split 80%/20% for training/test. Each category h
      - gamma = 0.8
      - max_lr = 0.001
      - min_lr = 1e-6
+
+###   Base + Data Augmentation + Scheduler(Cosine Annealing with warmup) + Data balancing
+  - Herbarium 2021 dataset suffers from prominent class im-balance.
+  - ![](https://www.kaggleusercontent.com/kf/56556674/eyJhbGciOiJkaXIiLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0..9oCPYrfWpKAb0FvOySO9jA.OUC5FfKoKthU7ge-W9NBQyUJnmiV8fzaFClZBnHZ1SAqDxc4foyTdZRRQDYCEQUNotI_CqPgApXNpgv-Vf9hIXecZw0i_ZobQfNVQ-oaDDkgzxmuwopY_dTLq7xw5om8VMHqUVLAj8useuvoP4EmBd6Y4eXnlYEA8HGKbV2safiIXuXseCSZI1TsDmXS6Eupqyl7yX3o1j8KkeeSXf5S6Wve-GMgilrLzYWRvfUzmlFGcXfXVKmvFi-3nj11mCB_nAa6XSpSdhqHQn7_Fjcv4RmeTnKxyHBTyW2mfEgBc3EuVaFbtSFr4hnprxeDg4Ih4VRkes9yZuQJKfxWOa93GwOcNbHmONAYtmelMGkv9ldY7UKOnDt3x4qCp40RK23crnLWNKHD6vnH0VbRiE5V8C0jpHaLUo1zJ1T9ao9r1kSE6ePVcFst7TOuLUZ4nwtEgpJD33anSC3C9DiJgAg2mgd4HidwB-S4SkABN0o28oQV3Unxn3sosmv8vc1JLI52KH3wl0ZkKrLPqw5PC_ZpL0H3bUawXMyOkILdth9ixQyfsv7vCJdnXilt36Hlnji9EZEN7mquPw2T83Ky9EGCdvAqQvDTpLEaZ7aheTQeB_v883eAwi4NkmpJBDPMAdSyy4nqY4vUwOtokpHCZXPLjzNlwwfg_KG_sk8szOMcVC4.HYpyBq6rNn8x7LFDBNCwwA/__results___files/__results___5_1.png)
+  - apply balanced sampling (randomly sample batch images per category per epoch).
+
+###   Base + Data Augmentation + Scheduler(Cosine Annealing with warmup) + Data balancing + Model chagnge
+  - model change : resnet34 to efficientnet-b0 
+  - ![](https://1.bp.blogspot.com/-DjZT_TLYZok/XO3BYqpxCJI/AAAAAAAAEKM/BvV53klXaTUuQHCkOXZZGywRMdU9v9T_wCLcBGAs/s1600/image2.png)
+  - ![](https://1.bp.blogspot.com/-oNSfIOzO8ko/XO3BtHnUx0I/AAAAAAAAEKk/rJ2tHovGkzsyZnCbwVad-Q3ZBnwQmCFsgCEwYBhgL/s640/image3.png)
 
 ## Future Plans
   - Add [ArcFace Loss](https://arxiv.org/abs/1801.07698) for generating better representation  
