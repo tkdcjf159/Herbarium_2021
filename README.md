@@ -66,5 +66,3 @@ The data has been approximately split 80%/20% for training/test. Each category h
 
 ## Future Plans
   - Add [ArcFace Loss](https://arxiv.org/abs/1801.07698) for generating better representation  
-  - Change Model Architecture and apply [Self-training with Noisy Student](https://arxiv.org/pdf/1911.04252v4.pdf)
-      - Model : EfficientNet
