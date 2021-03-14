@@ -60,9 +60,14 @@ The data has been approximately split 80%/20% for training/test. Each category h
   - apply weight balancing
     
 ###   Base + Data Augmentation + Scheduler(Cosine Annealing with warmup) + Data balancing + Model chagnge
-  - model change : resnet34 to efficientnet-b0 
+  - model change : resnet34 to efficientnet-b3 
   - ![](https://1.bp.blogspot.com/-DjZT_TLYZok/XO3BYqpxCJI/AAAAAAAAEKM/BvV53klXaTUuQHCkOXZZGywRMdU9v9T_wCLcBGAs/s1600/image2.png)
   - ![](https://1.bp.blogspot.com/-oNSfIOzO8ko/XO3BtHnUx0I/AAAAAAAAEKk/rJ2tHovGkzsyZnCbwVad-Q3ZBnwQmCFsgCEwYBhgL/s640/image3.png)
+
+## Result
+  - Best: ase + Data Augmentation + Scheduler(Cosine Annealing with warmup) + Data balancing + Model chagnge
+  - ![]()
+  - ![]()
 
 ## Future Plans
   - Add [ArcFace Loss](https://arxiv.org/abs/1801.07698) for generating better representation  
