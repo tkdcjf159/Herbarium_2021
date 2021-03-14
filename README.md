@@ -54,18 +54,18 @@ The data has been approximately split 80%/20% for training/test. Each category h
      - max_lr = 0.001
      - min_lr = 1e-6
 
-###   Base + Data Augmentation + Scheduler(Cosine Annealing with warmup) + Data balancing
+###   Base + Data Augmentation + Scheduler(Cosine Annealing with warmup) + Weight balancing
   - Herbarium 2021 dataset suffers from prominent class im-balance.
   - ![](https://www.kaggleusercontent.com/kf/56556674/eyJhbGciOiJkaXIiLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0..9oCPYrfWpKAb0FvOySO9jA.OUC5FfKoKthU7ge-W9NBQyUJnmiV8fzaFClZBnHZ1SAqDxc4foyTdZRRQDYCEQUNotI_CqPgApXNpgv-Vf9hIXecZw0i_ZobQfNVQ-oaDDkgzxmuwopY_dTLq7xw5om8VMHqUVLAj8useuvoP4EmBd6Y4eXnlYEA8HGKbV2safiIXuXseCSZI1TsDmXS6Eupqyl7yX3o1j8KkeeSXf5S6Wve-GMgilrLzYWRvfUzmlFGcXfXVKmvFi-3nj11mCB_nAa6XSpSdhqHQn7_Fjcv4RmeTnKxyHBTyW2mfEgBc3EuVaFbtSFr4hnprxeDg4Ih4VRkes9yZuQJKfxWOa93GwOcNbHmONAYtmelMGkv9ldY7UKOnDt3x4qCp40RK23crnLWNKHD6vnH0VbRiE5V8C0jpHaLUo1zJ1T9ao9r1kSE6ePVcFst7TOuLUZ4nwtEgpJD33anSC3C9DiJgAg2mgd4HidwB-S4SkABN0o28oQV3Unxn3sosmv8vc1JLI52KH3wl0ZkKrLPqw5PC_ZpL0H3bUawXMyOkILdth9ixQyfsv7vCJdnXilt36Hlnji9EZEN7mquPw2T83Ky9EGCdvAqQvDTpLEaZ7aheTQeB_v883eAwi4NkmpJBDPMAdSyy4nqY4vUwOtokpHCZXPLjzNlwwfg_KG_sk8szOMcVC4.HYpyBq6rNn8x7LFDBNCwwA/__results___files/__results___5_1.png)
   - apply weight balancing
     
-###   Base + Data Augmentation + Scheduler(Cosine Annealing with warmup) + Data balancing + Model chagnge
+###   Base + Data Augmentation + Scheduler(Cosine Annealing with warmup) + Weight balancing + Model chagnge
   - model change : resnet34 to efficientnet-b3 
   - ![](https://1.bp.blogspot.com/-DjZT_TLYZok/XO3BYqpxCJI/AAAAAAAAEKM/BvV53klXaTUuQHCkOXZZGywRMdU9v9T_wCLcBGAs/s1600/image2.png)
   - ![](https://1.bp.blogspot.com/-oNSfIOzO8ko/XO3BtHnUx0I/AAAAAAAAEKk/rJ2tHovGkzsyZnCbwVad-Q3ZBnwQmCFsgCEwYBhgL/s640/image3.png)
 
 ## Result
-  - Best: Base + Data Augmentation + Scheduler(Cosine Annealing with warmup) + Data balancing + Model chagnge
+  - Best: Base + Data Augmentation + Scheduler(Cosine Annealing with warmup) + Weight balancing + Model chagnge
   - ![](https://github.com/tkdcjf159/Herbarium_2021/blob/main/imgs/train_loss.png)
   - ![](https://github.com/tkdcjf159/Herbarium_2021/blob/main/imgs/val_accuracy.png)
   - kaggle submit result ([F1 score](https://eunsukimme.github.io/ml/2019/10/21/Accuracy-Recall-Precision-F1-score/))
