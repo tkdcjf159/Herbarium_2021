@@ -65,9 +65,11 @@ The data has been approximately split 80%/20% for training/test. Each category h
   - ![](https://1.bp.blogspot.com/-oNSfIOzO8ko/XO3BtHnUx0I/AAAAAAAAEKk/rJ2tHovGkzsyZnCbwVad-Q3ZBnwQmCFsgCEwYBhgL/s640/image3.png)
 
 ## Result
-  - Best: ase + Data Augmentation + Scheduler(Cosine Annealing with warmup) + Data balancing + Model chagnge
+  - Best: Base + Data Augmentation + Scheduler(Cosine Annealing with warmup) + Data balancing + Model chagnge
   - ![](https://github.com/tkdcjf159/Herbarium_2021/blob/main/imgs/train_loss.png)
   - ![](https://github.com/tkdcjf159/Herbarium_2021/blob/main/imgs/val_accuracy.png)
-
+  - kaggle submit result ([F1 score](https://eunsukimme.github.io/ml/2019/10/21/Accuracy-Recall-Precision-F1-score/))
+     - ![](https://github.com/tkdcjf159/Herbarium_2021/blob/main/imgs/submit_result.png) 
+  
 ## Future Plans
   - Add [ArcFace Loss](https://arxiv.org/abs/1801.07698) for generating better representation  
