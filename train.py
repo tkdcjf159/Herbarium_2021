@@ -1,4 +1,4 @@
-import numpy as np
+import numpy as np 
 import pandas as pd
 from PIL import Image
 import os
@@ -8,6 +8,7 @@ import tqdm
 import math
 import random
 import argparse
+from collections import defaultdict
 
 import horovod.torch as hvd
 import torch
@@ -15,27 +16,45 @@ import torch.nn as nn
 import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data.sampler import Sampler
-from cutmix import CutMix, CutMixCrossEntropyLoss
 from torch.utils.data import Dataset, DataLoader
 from cosine_annealing_with_warmup import CosineAnnealingWarmupRestarts
+
+from efficientnet_pytorch import EfficientNet
 
 class GetData(Dataset):
     def __init__(self, Dir, FNames, Labels, Transform):
         self.dir = Dir
         self.fnames = FNames
         self.transform = Transform
-        self.labels = Labels
-
+        self.labels = Labels      
+        
     def __len__(self):
         return len(self.fnames)
 
-    def __getitem__(self, index):
+    def __getitem__(self, index):       
         x = Image.open(os.path.join(self.dir, self.fnames[index])).convert('RGB')
-
-        if "train" in self.dir:
+        if "train" in self.dir:             
             return self.transform(x), self.labels[index]
-        elif "test" in self.dir:
+        elif "test" in self.dir:            
             return self.transform(x), self.fnames[index]
+
+def rand_bbox(size, lam):
+    W = size[2]
+    H = size[3]
+    cut_rat = np.sqrt(1. - lam)
+    cut_w = np.int(W * cut_rat)
+    cut_h = np.int(H * cut_rat)
+
+    # uniform
+    cx = np.random.randint(W)
+    cy = np.random.randint(H)
+
+    bbx1 = np.clip(cx - cut_w // 2, 0, W)
+    bby1 = np.clip(cy - cut_h // 2, 0, H)
+    bbx2 = np.clip(cx + cut_w // 2, 0, W)
+    bby2 = np.clip(cy + cut_h // 2, 0, H)
+
+    return bbx1, bby1, bbx2, bby2
 
 
 def str2bool(v):
@@ -87,7 +106,7 @@ if __name__ == '__main__':
     args = argparse.ArgumentParser()
     args.add_argument("--lr", type=float, default=1e-3)
     args.add_argument("--cuda", type=str2bool, default="TRUE")
-    args.add_argument("--num_epochs", type=int, default=6)
+    args.add_argument("--num_epochs", type=int, default=20)
     args.add_argument("--img_size", type=int, default=224)
     args.add_argument("--optim", type=str, default="adam")
     args.add_argument("--model_name", type=str, default="resnet34")
@@ -98,9 +117,10 @@ if __name__ == '__main__':
     args.add_argument("--valid_dataset_ratio", type=float, default=0.01)
     args.add_argument("--use_cutmix", type=str2bool, default="TRUE")
     args.add_argument("--use_cosine_annealing_with_warmup", type=str2bool, default="TRUE")
+    args.add_argument("--use_data_balancing", type=str2bool, default="FALSE")
 
     config = args.parse_args()
-    
+
     LR = config.lr
     CUDA = config.cuda
     EPOCHS = config.num_epochs
@@ -114,9 +134,10 @@ if __name__ == '__main__':
     VALID_RATIO = config.valid_dataset_ratio
     USE_CUTMIX = config.use_cutmix
     USE_CA = config.use_cosine_annealing_with_warmup
-
-    SAVE_PATH = os.path.join(CKPT_DIR,"cutmix_{}_CA_with_warmup_{}".format(USE_CUTMIX, USE_CA))
-    if not os.path.exists(SAVE_PATH):
+    USE_DATA_BALANCING = config.use_data_balancing
+   
+    SAVE_PATH = os.path.join(CKPT_DIR,"{}_cutmix_{}_CA_with_warmup_{}_data_balancing_{}".format(MODEL_NAME, USE_CUTMIX, USE_CA, USE_DATA_BALANCING))
+    if not os.path.isdir(SAVE_PATH):
         os.makedirs(SAVE_PATH)
     hvd.init()
     torch.cuda.set_device(hvd.local_rank())
@@ -124,7 +145,7 @@ if __name__ == '__main__':
     """ TRAIN """
     if hvd.rank() == 0: print("loading data...")
     with open(TRAIN_DIR + 'metadata.json', "r", encoding="ISO-8859-1") as file:
-        train = json.load(file)
+        train = json.load(file)  
 
     train_img = pd.DataFrame(train['images'])
     train_ann = pd.DataFrame(train['annotations']).drop(columns='image_id')
@@ -136,6 +157,7 @@ if __name__ == '__main__':
     if hvd.rank() == 0: print("image mean height {} , width {} classes {}".format(mean_h, mean_w, NUM_CL))
 
     X_Train, Y_Train = train_df['file_name'].values, train_df['category_id'].values
+
     # shuffle
     shuffle_list = list(zip(X_Train, Y_Train))
     random.shuffle(shuffle_list)
@@ -145,13 +167,26 @@ if __name__ == '__main__':
     Y_Valid = Y_Train[:int(len(Y_Train)*VALID_RATIO)]
     X_Train = X_Train[int(len(X_Train)*VALID_RATIO):]
     Y_Train = Y_Train[int(len(Y_Train)*VALID_RATIO):]
+    if USE_DATA_BALANCING:
+        CategoryLabels = defaultdict(list)    
+        for idx, label in enumerate(Y_Train):
+            CategoryLabels[label].append(idx)
+
+        len_category = [len(CategoryLabels[i]) for i in range(NUM_CL)]
+        total_len = len(Y_Train)
+        max_len = max(len_category)
+        loss_weight = [ 1. - (len_c / (max_len*1.5)) for len_c in len_category]
+        loss_weight = torch.FloatTensor(loss_weight).cuda()
+
+    else:
+        loss_weight= None
 
     TrainTransform = transforms.Compose(
         [ transforms.Resize((IMG_SIZE, IMG_SIZE)),
           transforms.RandomHorizontalFlip(),
           transforms.ToTensor(),
           transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
-        
+
     ValidTransform = transforms.Compose(
         [ transforms.Resize((IMG_SIZE, IMG_SIZE)),
           transforms.ToTensor(),
@@ -160,12 +195,7 @@ if __name__ == '__main__':
     if hvd.rank() == 0: print("define dataset and create dataloader")
     trainset = GetData(TRAIN_DIR, X_Train, Y_Train, TrainTransform)
 
-    if USE_CUTMIX:
-        if hvd.rank() == 0: print("use cutmix")
-        trainset = CutMix(trainset, num_class=NUM_CL, num_mix=1, beta=1.0, prob=0.49)
-        criterion = CutMixCrossEntropyLoss()
-    else:
-        criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss(weight=loss_weight).cuda()
 
     train_sampler = torch.utils.data.distributed.DistributedSampler(
             trainset, num_replicas=hvd.size(), rank=hvd.rank())
@@ -180,15 +210,19 @@ if __name__ == '__main__':
     if hvd.rank() == 0: print("define model and optimizer, scheduler")
     if MODEL_NAME == "resnet34":
         model = torchvision.models.resnet34(pretrained=True)
+        model.fc = nn.Linear(512, NUM_CL, bias=True)
+    elif MODEL_NAME == "efficientnet-b3":
+        model = EfficientNet.from_pretrained('efficientnet-b3', num_classes=NUM_CL)
+    else:
+        raise ValueError("unsupported model")
 
-    model.fc = nn.Linear(512, NUM_CL, bias=True)
     if CUDA:
         model = model.cuda()
 
     if OPTIM == "adam":
         optimizer = torch.optim.Adam(model.parameters(), lr=LR)
     optimizer = hvd.DistributedOptimizer(optimizer, named_parameters=model.named_parameters())
-
+    
     if USE_CA:
         steps_per_epoch = int((len(X_Train)/BATCH)/hvd.size())
         if hvd.rank() == 0: print("use scheduler : steps_per_epoch {}".format(steps_per_epoch))
@@ -198,12 +232,13 @@ if __name__ == '__main__':
                                                   max_lr=LR,
                                                   min_lr=1e-6,
                                                   warmup_steps=int(steps_per_epoch*0.1),
-                                                  gamma=0.5)
+                                                  gamma=0.8)
     else:
-        scheduler = None
-        
-    hvd.broadcast_parameters(model.state_dict(), root_rank=0)        
+        scheduler = None    
+    hvd.broadcast_parameters(model.state_dict(), root_rank=0)
+
     if hvd.rank() == 0: print("train start")
+    beta = 1.0
     for epoch in range(EPOCHS):
         tr_loss = 0.0
         correct = 0
@@ -214,17 +249,32 @@ if __name__ == '__main__':
             disable_pbar = False
         pbar = tqdm.tqdm(trainloader, disable=disable_pbar)
 
-        for i, (images, labels) in enumerate(pbar):
+        for i, (images, labels) in enumerate(pbar):        
             images = images.cuda()
             labels = labels.cuda()
-            logits = model(images.float())
-            loss = criterion(logits, labels)
+            r = np.random.rand(1)
+            if USE_CUTMIX and r < 0.49:
+                # generate mixed sample
+                lam = np.random.beta(beta, beta)
+                rand_index = torch.randperm(images.size()[0]).cuda()
+                target_a = labels
+                target_b = labels[rand_index]
+                bbx1, bby1, bbx2, bby2 = rand_bbox(images.size(), lam)
+                images[:, :, bbx1:bbx2, bby1:bby2] = images[rand_index, :, bbx1:bbx2, bby1:bby2]
+                # adjust lambda to exactly match pixel ratio
+                lam = 1 - ((bbx2 - bbx1) * (bby2 - bby1) / (images.size()[-1] * images.size()[-2]))
+                # compute output
+                logits = model(images.float())
+                loss = criterion(logits, target_a) * lam + criterion(logits, target_b) * (1. - lam)
+            else:
+                # compute output
+                logits = model(images.float())
+                loss = criterion(logits, labels)
+
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             _, pred = torch.max(logits.data, 1)
-            if USE_CUTMIX:
-                _, labels = torch.max(labels.data, 1)
             correct += (pred == labels).float().sum().item()
             total += labels.size(0)
             accuracy = 100 * correct / total
@@ -234,36 +284,40 @@ if __name__ == '__main__':
             if hvd.rank () == 0:
                 pbar.set_description("Train Epoch {} | Loss {:.4f} ACC {:.4f} ".format(epoch, avr_loss, accuracy))
                 pbar.update(1)
+            if USE_CA:
+                scheduler.step()
+       
 
         torch.cuda.empty_cache()
+        train_avr_loss = avr_loss
         tr_loss = 0.0
         correct = 0
         total = 0
-        with torch.no_grad():
+        with torch.no_grad(): 
             pbar = tqdm.tqdm(validloader, disable=disable_pbar)
             model.eval()
-            for i, (images, labels) in enumerate(pbar):
+            for i, (images, labels) in enumerate(pbar):       
                 images = images.cuda()
                 labels = labels.cuda()
-                logits = model(images.float())
+                logits = model(images.float())       
                 loss = criterion(logits, labels)
                 _, pred = torch.max(logits.data, 1)
-                correct += (pred == labels).float().sum().item()
+                correct += (pred == labels).float().sum().item()                
                 total += labels.size(0)
                 accuracy = 100 * correct / total
 
                 tr_loss += loss.detach().item()
                 avr_loss = tr_loss / (i+1)
-                if hvd.rank () == 0:    
+                if hvd.rank () == 0:
                     pbar.set_description("Valid Epoch {} | Loss {:.4f} ACC {:.4f}".format(epoch, avr_loss, accuracy))
                     pbar.update(1)
 
         torch.cuda.empty_cache()
         if hvd.rank () == 0:
-            ckpt_name = "{}_epoch_{}_loss_{:.2f}_optim_{}_lr_{}.pth".format(MODEL_NAME, epoch, avr_loss, OPTIM, LR)
+            ckpt_name = "{}_epoch_{}_train_loss_{:.2f}_val_accuracy_{:.2f}_optim_{}_lr_{}".format(MODEL_NAME, epoch, train_avr_loss, accuracy, OPTIM, LR)
             model_path = os.path.join(SAVE_PATH, ckpt_name)
             save_model(model_path, model, optimizer, scheduler)
-
+ 
     """ TEST """
     torch.cuda.empty_cache()
     with open(TEST_DIR + 'metadata.json', "r", encoding="ISO-8859-1") as file:
@@ -286,13 +340,13 @@ if __name__ == '__main__':
     with torch.no_grad():
         pbar = tqdm.tqdm(testloader, disable=disable_pbar)
         model.eval()
-        for image, fname in pbar:
+        for image, fname in pbar: 
             image = image.cuda()
-
-            logits = model(image)
-            ps = torch.exp(logits)
+        
+            logits = model(image)        
+            ps = torch.exp(logits)        
             _, top_class = ps.topk(1, dim=1)
-
+        
             for pred in top_class:
                 s_ls.append([fname[0].split('/')[-1][:-4], pred.item()])
             pbar.update(1)
@@ -301,4 +355,5 @@ if __name__ == '__main__':
     sub = pd.DataFrame.from_records(s_ls, columns=['Id', 'Predicted'])
     sub.head()
 
-    sub.to_csv(os.path.join(SAVE_PATH,"submission.csv"), index=False)    
+    sub.to_csv(os.path.join(SAVE_PATH,"submission.csv"), index=False)
+
