@@ -66,8 +66,8 @@ The data has been approximately split 80%/20% for training/test. Each category h
 
 ## Result
   - Best: ase + Data Augmentation + Scheduler(Cosine Annealing with warmup) + Data balancing + Model chagnge
-  - ![]()
-  - ![]()
+  - ![](https://github.com/tkdcjf159/Herbarium_2021/blob/main/imgs/train_loss.png)
+  - ![](https://github.com/tkdcjf159/Herbarium_2021/blob/main/imgs/val_accuracy.png)
 
 ## Future Plans
   - Add [ArcFace Loss](https://arxiv.org/abs/1801.07698) for generating better representation  
