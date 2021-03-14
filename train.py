@@ -347,8 +347,8 @@ if __name__ == '__main__':
             ps = torch.exp(logits)        
             _, top_class = ps.topk(1, dim=1)
         
-            for pred in top_class:
-                s_ls.append([fname[0].split('/')[-1][:-4], pred.item()])
+            for idx, pred in enumerate(top_class):
+                s_ls.append([fname[idx].split('/')[-1][:-4], pred.item()])
             pbar.update(1)
 
 
